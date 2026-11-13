@@ -1,22 +1,28 @@
 package com.sena.controllabs.dto;
 
+import com.sena.controllabs.entity.RoomEntity;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
 public record RoomCreateRequest(
-    @NotBlank(message = "El código del aula es obligatorio")
-    String code,
-
-    @NotBlank(message = "El nombre del laboratorio no puede estar vacío")
+        @NotBlank(message = "El nombre es obligatorio")
         String name,
 
-    @NotNull(message = "Debe especificar la cantidad de PCs")
-    @Min(value = 1, message = "El laboratorio debe tener al menos 1 PC")
-        Integer totalPcs,
+        @NotBlank(message = "El bloque es obligatorio")
+        String locationBlock,
 
-    @NotBlank(message = "El bloque de ubicación es obligatorio")
-    String locationBlock
+        @NotNull(message = "La capacidad de PCs es obligatoria")
+        @Min(value = 1, message = "Mínimo 1 PC")
+        Integer totalPcs
 ) {
 
+    public RoomEntity toEntity() {
+        RoomEntity entity = new RoomEntity();
+        entity.setNombre(name);
+        entity.setBloque(locationBlock);
+        entity.setCapacidadPcs(totalPcs);
+        entity.setEstado(RoomEntity.RoomStatus.OPERATIVO);
+        return entity;
+    }
 }

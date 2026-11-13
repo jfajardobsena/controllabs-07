@@ -1,0 +1,1330 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SENA ADSO - Sesión Unificada: ORM, JPA, Repositorios & Capa Service Passthrough</title>
+
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Canvas Confetti Library -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        sena: {
+                            green: '#39A900',
+                            dark: '#1e1e1e',
+                            lightGreen: '#eef9ea',
+                            accent: '#F57C00',
+                            gray: '#f8fafc',
+                            blue: '#0284c7'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Fira+Code:wght@400;500;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .font-mono { font-family: 'Fira Code', monospace; }
+        .scroll-mt-header { scroll-margin-top: 5rem; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col antialiased selection:bg-sena-green selection:text-white">
+
+    <!-- Header principal SENA -->
+    <header class="bg-sena-dark text-white border-b-4 border-sena-green sticky top-0 z-50 shadow-md">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <svg class="h-9 w-9 text-sena-green fill-current" viewBox="0 0 100 100">
+                    <circle cx="50" cy="50" r="45" fill="none" stroke="#39A900" stroke-width="6"/>
+                    <path d="M50 20 L50 80 M20 50 L80 50" stroke="#39A900" stroke-width="6" stroke-linecap="round"/>
+                    <circle cx="50" cy="50" r="15" fill="#39A900"/>
+                </svg>
+                <div>
+                    <h1 class="text-md sm:text-lg font-bold tracking-tight">SENA <span class="text-sena-green font-extrabold">ADSO</span></h1>
+                    <p class="text-[10px] sm:text-xs text-slate-400">Sesión Integrada • ORM, JPA, Repositorios & Capa Service Passthrough</p>
+                </div>
+            </div>
+            <div class="hidden xl:flex space-x-3 text-[11px] font-medium">
+                <a href="#cronograma" class="hover:text-sena-green transition-colors py-2">1. Ruta Clase</a>
+                <a href="#fundamentos-jpa" class="hover:text-sena-green transition-colors py-2 text-sena-green font-bold">2. ORM & JPA</a>
+                <a href="#explicacion-properties" class="hover:text-sena-green transition-colors py-2 text-indigo-400 font-bold">3. Properties</a>
+                <a href="#entidades-loans" class="hover:text-sena-green transition-colors py-2 text-purple-400 font-bold">4. Entidades</a>
+                <a href="#repositories" class="hover:text-sena-green transition-colors py-2 text-sky-400 font-bold">5. Repositorios</a>
+                <a href="#capa-service" class="hover:text-sena-green transition-colors py-2 text-amber-400 font-bold">6. Servicios Passthrough</a>
+                <a href="#mapeo-dtos" class="hover:text-sena-green transition-colors py-2 text-pink-400 font-bold">7. Mapeo DTO &harr; Entity</a>
+                <a href="#refactor-controller" class="hover:text-sena-green transition-colors py-2 text-teal-400 font-bold">8. Refactor Controller</a>
+                <a href="#simulador-completo" class="hover:text-sena-green transition-colors py-2 text-rose-400 font-bold">9. Simulador</a>
+            </div>
+            <div class="bg-sena-green text-white px-3 py-1 rounded-full text-xs font-bold tracking-wide shadow-sm flex items-center gap-1.5">
+                <i class="fa-solid fa-layer-group"></i> Sesión Integrada
+            </div>
+        </div>
+    </header>
+
+    <!-- Hero Banner -->
+    <section class="bg-gradient-to-br from-sena-dark via-slate-900 to-black text-white py-12 px-4 relative overflow-hidden">
+        <div class="absolute -right-10 -bottom-10 w-80 h-80 bg-sena-green opacity-10 rounded-full blur-3xl"></div>
+        <div class="max-w-5xl mx-auto text-center relative z-10 space-y-5">
+            <span class="inline-flex items-center gap-1.5 bg-sena-green/20 text-sena-green border border-sena-green/30 text-xs font-extrabold uppercase px-3 py-1.5 rounded-full tracking-wider">
+                <span class="w-2 h-2 rounded-full bg-sena-green animate-ping"></span>
+                Curso de Spring Boot Enterprise • Nivelación Integrada (Persistencia + Servicios)
+            </span>
+            <h2 class="text-3xl md:text-5xl font-black leading-tight tracking-tight">
+                De PostgreSQL a la Capa de Servicios: <br class="hidden md:block">
+                <span class="text-sena-green">Entidades JPA, Repositorios & Servicios Passthrough</span>
+            </h2>
+            <p class="text-slate-300 text-sm md:text-base max-w-3xl mx-auto leading-relaxed">
+                Guía unificada para construir el flujo arquitectónico completo de <strong>ControlLabs</strong> sin sobrecarga: configuraremos PostgreSQL, mapearemos las entidades del script <code class="font-mono text-sena-green">controllabs.sql</code>, crearemos los repositorios y dejaremos lista la <strong>Capa Service (`@Service`)</strong> delegando directamente a los repositorios (sin lógica de negocio compleja aún).
+            </p>
+            <div class="pt-2 flex flex-wrap justify-center gap-3">
+                <a href="#fundamentos-jpa" class="bg-sena-green hover:bg-emerald-600 text-white font-bold px-5 py-2.5 rounded-xl shadow-lg transition-all text-xs sm:text-sm transform hover:-translate-y-0.5 flex items-center gap-2">
+                    <i class="fa-solid fa-database"></i> 1. ORM & Entidades
+                </a>
+                <a href="#repositories" class="bg-sena-blue hover:bg-sky-600 text-white font-bold px-5 py-2.5 rounded-xl shadow-lg transition-all text-xs sm:text-sm transform hover:-translate-y-0.5 flex items-center gap-2">
+                    <i class="fa-solid fa-magnifying-glass"></i> 2. Repositorios
+                </a>
+                <a href="#capa-service" class="bg-amber-600 hover:bg-amber-500 text-white font-bold px-5 py-2.5 rounded-xl text-xs sm:text-sm transition-all transform hover:-translate-y-0.5 flex items-center gap-2">
+                    <i class="fa-solid fa-gears"></i> 3. Servicios Passthrough
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Main Content Area -->
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-16">
+
+        <!-- SECCIÓN 1: RUTA PEDAGÓGICA INTEGRADA -->
+        <section id="cronograma" class="scroll-mt-header">
+            <div class="border-l-4 border-sena-green pl-4 mb-8">
+                <h3 class="text-2xl font-bold text-sena-dark tracking-tight">1. Mapa de Ruta de la Clase Integrada (De la BD al Controller)</h3>
+                <p class="text-slate-500 text-sm">Cómo conectaremos todas las capas de Clean Architecture en una sola jornada práctica y progresiva.</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- Bloque 1 -->
+                <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm flex flex-col justify-between space-y-4 hover:shadow-md transition-shadow relative overflow-hidden">
+                    <div class="absolute top-0 right-0 w-2 h-full bg-sena-green"></div>
+                    <div>
+                        <span class="bg-sena-dark text-sena-green font-bold text-[10px] px-3 py-1 rounded-full uppercase tracking-wider">
+                            Bloque 1 • Persistencia Base
+                        </span>
+                        <h4 class="font-bold text-slate-800 text-base mt-3">ORM, `application.properties` & Entidades JPA</h4>
+                        <p class="text-slate-600 text-xs mt-2 leading-relaxed">
+                            Conexión a PostgreSQL, explicación de anotaciones JPA y creación de `UserEntity`, `RoomEntity` y `LoanEntity` (más el reto para `EquipmentEntity` e `IncidentEntity`).
+                        </p>
+                    </div>
+                    <div class="text-[11px] text-slate-400 font-mono border-t border-slate-100 pt-3 flex items-center gap-2">
+                        <i class="fa-solid fa-database text-sena-green"></i> Capa Entity & DB
+                    </div>
+                </div>
+
+                <!-- Bloque 2 -->
+                <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm flex flex-col justify-between space-y-4 hover:shadow-md transition-shadow relative overflow-hidden">
+                    <div class="absolute top-0 right-0 w-2 h-full bg-sky-500"></div>
+                    <div>
+                        <span class="bg-sky-600 text-white font-bold text-[10px] px-3 py-1 rounded-full uppercase tracking-wider">
+                            Bloque 2 • Acceso a Datos
+                        </span>
+                        <h4 class="font-bold text-slate-800 text-base mt-3">Capa Repository (`JpaRepository` + Consultas)</h4>
+                        <p class="text-slate-600 text-xs mt-2 leading-relaxed">
+                            Creación de repositorios CRUD base (`UserRepository`, `RoomRepository`, `LoanRepository`) que heredan de `JpaRepository`, sin consultas personalizadas.
+                        </p>
+                    </div>
+                    <div class="text-[11px] text-slate-400 font-mono border-t border-slate-100 pt-3 flex items-center gap-2">
+                        <i class="fa-solid fa-layer-group text-sky-600"></i> Capa Repository
+                    </div>
+                </div>
+
+                <!-- Bloque 3 -->
+                <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm flex flex-col justify-between space-y-4 hover:shadow-md transition-shadow relative overflow-hidden">
+                    <div class="absolute top-0 right-0 w-2 h-full bg-amber-500"></div>
+                    <div>
+                        <span class="bg-amber-600 text-white font-bold text-[10px] px-3 py-1 rounded-full uppercase tracking-wider">
+                            Bloque 3 • Desacoplamiento
+                        </span>
+                        <h4 class="font-bold text-slate-800 text-base mt-3">Servicios Passthrough (`@Service`) & Conexión al Controller</h4>
+                        <p class="text-slate-600 text-xs mt-2 leading-relaxed">
+                            Creación de interfaces (`*Service`) e implementaciones (`*ServiceImpl`) delegando directamente al repositorio sin lógica de negocio, e inyección en el Controller.
+                        </p>
+                    </div>
+                    <div class="text-[11px] text-slate-400 font-mono border-t border-slate-100 pt-3 flex items-center gap-2">
+                        <i class="fa-solid fa-gears text-amber-600"></i> Controller -> Service -> Repo
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECCIÓN 2: FUNDAMENTOS DE ORM Y JPA -->
+        <section id="fundamentos-jpa" class="scroll-mt-header space-y-8">
+            <div class="border-l-4 border-sena-green pl-4">
+                <h3 class="text-2xl font-bold text-sena-dark tracking-tight">2. Fundamentos de ORM, JPA e Hibernate</h3>
+                <p class="text-slate-500 text-sm">Cómo Java se comunica con PostgreSQL sin escribir sentencias SQL repetitivas.</p>
+            </div>
+
+            <div class="bg-white p-6 md:p-8 rounded-3xl border border-slate-200 shadow-sm space-y-6">
+                <div class="flex items-center gap-3 text-sena-green">
+                    <div class="p-3 bg-sena-lightGreen rounded-2xl">
+                        <i class="fa-solid fa-database text-2xl text-sena-green"></i>
+                    </div>
+                    <div>
+                        <h4 class="font-bold text-slate-800 text-base">La Incompatibilidad de Paradigmas (Object-Relational Impedance Mismatch)</h4>
+                        <p class="text-xs text-slate-500">¿Por qué necesitamos un traductor entre Java y SQL?</p>
+                    </div>
+                </div>
+                <p class="text-xs md:text-sm text-slate-600 leading-relaxed">
+                    En Java trabajamos con <strong>Clases, Objetos, Referencias y Tipos Complejos</strong>. En PostgreSQL guardamos datos en <strong>Tablas, Filas y Claves Foráneas (FK)</strong>. Un <strong>ORM</strong> traduce automáticamente nuestras acciones en Java (`repository.save(loan)`) a sentencias SQL nativas (`INSERT INTO loans...`).
+                </p>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2 font-mono text-xs">
+                    <div class="bg-slate-50 p-5 rounded-2xl border border-slate-200 space-y-2">
+                        <span class="bg-purple-600 text-white font-bold text-[10px] px-2.5 py-1 rounded-full uppercase">📜 JPA (Jakarta Persistence API)</span>
+                        <p class="text-slate-600 font-sans text-[11px] leading-relaxed pt-1">
+                            Es la <strong>especificación estándar</strong> (las reglas y anotaciones como <code class="font-mono text-purple-700">@Entity</code>, <code class="font-mono text-purple-700">@Table</code>, <code class="font-mono text-purple-700">@Id</code>). No ejecuta código por sí sola.
+                        </p>
+                    </div>
+
+                    <div class="bg-slate-50 p-5 rounded-2xl border border-slate-200 space-y-2">
+                        <span class="bg-sena-green text-white font-bold text-[10px] px-2.5 py-1 rounded-full uppercase">⚙️ Hibernate ORM</span>
+                        <p class="text-slate-600 font-sans text-[11px] leading-relaxed pt-1">
+                            Es el <strong>motor real</strong> que implementa JPA en Spring Boot. Lee tus anotaciones, construye el SQL optimizado para PostgreSQL y administra la conexión.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECCIÓN 3: CONFIGURACIÓN DE APPLICATION.PROPERTIES -->
+        <section id="explicacion-properties" class="scroll-mt-header space-y-8">
+            <div class="border-l-4 border-indigo-500 pl-4">
+                <h3 class="text-2xl font-bold text-sena-dark tracking-tight">3. ¿Por qué Configuramos `application.properties`?</h3>
+                <p class="text-slate-500 text-sm">Desacoplamiento de credenciales, dirección del servidor PostgreSQL y reglas de validación del esquema.</p>
+            </div>
+
+            <div class="bg-white p-6 md:p-8 rounded-3xl border border-slate-200 shadow-sm space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-xs font-mono">
+                    <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-1">
+                        <span class="font-bold text-indigo-600 block">1. URL JDBC & Driver</span>
+                        <p class="text-slate-600 font-sans text-[11px] leading-relaxed">
+                            <code class="font-mono text-indigo-600">jdbc:postgresql://localhost:5432/controllabs</code> indica el protocolo, host, puerto y nombre exacto de la BD.
+                        </p>
+                    </div>
+                    <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-1">
+                        <span class="font-bold text-sena-blue block">2. Credenciales</span>
+                        <p class="text-slate-600 font-sans text-[11px] leading-relaxed">
+                            Evita quemar el usuario y contraseña dentro de las clases Java compiladas.
+                        </p>
+                    </div>
+                    <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-1">
+                        <span class="font-bold text-sena-green block">3. ddl-auto=validate</span>
+                        <p class="text-slate-600 font-sans text-[11px] leading-relaxed">
+                            Verifica que nuestras entidades Java coincidan exactamente con las tablas creadas por el script SQL sin borrar ni alterar datos.
+                        </p>
+                    </div>
+                    <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-1">
+                        <span class="font-bold text-amber-600 block">4. show-sql=true</span>
+                        <p class="text-slate-600 font-sans text-[11px] leading-relaxed">
+                            Imprime en la consola de VS Code cada consulta SQL que Hibernate ejecuta por debajo.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Dependencias Maven en pom.xml (VS Code) -->
+                <div class="bg-slate-900 text-white rounded-3xl border border-slate-800 p-6 font-mono text-xs space-y-3">
+                    <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+                        <span class="text-amber-400 font-bold">📦 Dependencias Obligatorias en `pom.xml` (Maven desde VS Code)</span>
+                        <span class="text-slate-400 text-[10px]">Ctrl+Shift+P &rarr; Maven: Add a Dependency</span>
+                    </div>
+                    <p class="text-slate-300 font-sans text-[11px] leading-relaxed">
+                        Antes de escribir las Entidades y Repositorios, asegúrate de agregar estas 3 dependencias dentro de la etiqueta <code class="text-amber-300">&lt;dependencies&gt;</code> de tu <code class="text-amber-300">pom.xml</code> (o instálalas en VS Code usando <code class="text-sky-400">Ctrl + Shift + P</code> &rarr; <strong>Maven: Add a Dependency</strong>) y luego sincroniza el proyecto:
+                    </p>
+                    <pre class="bg-slate-950 text-emerald-400 p-4 rounded-2xl overflow-x-auto border border-slate-800 text-[11px]">
+&lt;!-- 1. Spring Data JPA + Hibernate ORM --&gt;
+&lt;dependency&gt;
+    &lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+    &lt;artifactId&gt;spring-boot-starter-data-jpa&lt;/artifactId&gt;
+&lt;/dependency&gt;
+
+&lt;!-- 2. Driver JDBC Oficial de PostgreSQL --&gt;
+&lt;dependency&gt;
+    &lt;groupId&gt;org.postgresql&lt;/groupId&gt;
+    &lt;artifactId&gt;postgresql&lt;/artifactId&gt;
+    &lt;scope&gt;runtime&lt;/scope&gt;
+&lt;/dependency&gt;
+
+&lt;!-- 3. Jakarta Validation (Para anotaciones @Valid, @NotBlank, @NotNull en DTOs) --&gt;
+&lt;dependency&gt;
+    &lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+    &lt;artifactId&gt;spring-boot-starter-validation&lt;/artifactId&gt;
+&lt;/dependency&gt;</pre>
+                </div>
+
+                <!-- Archivo application.properties -->
+                <div class="bg-slate-900 text-white rounded-3xl border border-slate-800 p-6 font-mono text-xs space-y-3">
+                    <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+                        <span class="text-emerald-400 font-bold">📄 src/main/resources/application.properties</span>
+                        <span class="text-slate-400 text-[10px]">Configuración Global + PostgreSQL</span>
+                    </div>
+                    <pre class="bg-slate-950 text-emerald-400 p-4 rounded-2xl overflow-x-auto border border-slate-800">
+# 1. Prefijo Global para todos los RestControllers
+spring.mvc.servlet.path=/api/v1
+
+# 2. Configuración de Conexión JDBC a PostgreSQL
+spring.datasource.url=${DB_URL:jdbc:postgresql://localhost:5432/controllabs}
+spring.datasource.username=${DB_USERNAME:postgres}
+spring.datasource.password=${DB_PASSWORD:}
+spring.datasource.driver-class-name=org.postgresql.Driver
+
+# 3. Configuración de Hibernate ORM
+spring.jpa.database-platform=org.hibernate.dialect.PostgreSQLDialect
+spring.jpa.hibernate.ddl-auto=validate
+
+# 4. Logs SQL en consola para depuración
+spring.jpa.show-sql=true
+spring.jpa.properties.hibernate.format_sql=true</pre>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- SECCIÓN 4: ENTIDADES JPA & ANOTACIONES (CONTROLLABS.SQL) -->
+        <section id="entidades-loans" class="scroll-mt-header space-y-8">
+            <div class="border-l-4 border-purple-500 pl-4">
+                <h3 class="text-2xl font-bold text-sena-dark tracking-tight">4. Mapeo de Entidades JPA (`controllabs.sql`) & Anotaciones Clave</h3>
+                <p class="text-slate-500 text-sm">Cómo traducimos cada tabla, tipo de dato, Enum y clave foránea de PostgreSQL a clases Java.</p>
+            </div>
+
+            <!-- Diccionario Rápido de Anotaciones -->
+            <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-4">
+                <h4 class="font-bold text-slate-800 text-sm flex items-center gap-2">
+                    <i class="fa-solid fa-tags text-purple-600"></i> Anotaciones Esenciales en una Entidad JPA
+                </h4>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 text-xs font-sans">
+                    <div class="bg-slate-50 p-3.5 rounded-2xl border border-slate-200">
+                        <span class="font-mono font-bold text-purple-700">@Entity + @Table</span>
+                        <p class="text-slate-600 text-[11px] mt-1"><code class="font-mono">@Entity</code> hace que JPA administre la clase como entidad; <code class="font-mono">@Table(name = "...")</code> indica la tabla concreta a la que corresponde.</p>
+                    </div>
+                    <div class="bg-slate-50 p-3.5 rounded-2xl border border-slate-200">
+                        <span class="font-mono font-bold text-sena-blue">@Id + @GeneratedValue</span>
+                        <p class="text-slate-600 text-[11px] mt-1"><code class="font-mono">@Id</code> identifica la clave primaria. <code class="font-mono">@GeneratedValue</code> delega la generación: UUID para usuarios/salas e IDENTITY para préstamos.</p>
+                    </div>
+                    <div class="bg-slate-50 p-3.5 rounded-2xl border border-slate-200">
+                        <span class="font-mono font-bold text-sena-green">@Column</span>
+                        <p class="text-slate-600 text-[11px] mt-1">Configura el mapeo de un campo: nombre de columna, longitud, nulabilidad, unicidad y si puede actualizarse. Se usa para hacer explícitas las reglas del esquema.</p>
+                    </div>
+                    <div class="bg-slate-50 p-3.5 rounded-2xl border border-slate-200">
+                        <span class="font-mono font-bold text-purple-700">@Enumerated(EnumType.STRING)</span>
+                        <p class="text-slate-600 text-[11px] mt-1">Guarda el nombre del enum en vez de su posición numérica, evitando que reordenar constantes cambie el significado de datos existentes.</p>
+                    </div>
+                    <div class="bg-slate-50 p-3.5 rounded-2xl border border-slate-200">
+                        <span class="font-mono font-bold text-amber-700">@ManyToOne + @JoinColumn</span>
+                        <p class="text-slate-600 text-[11px] mt-1">Modela una FK hacia otra entidad; <code class="font-mono">@JoinColumn</code> especifica el nombre de la columna y <code class="font-mono">FetchType.LAZY</code> posterga la carga relacionada.</p>
+                    </div>
+                    <div class="bg-slate-50 p-3.5 rounded-2xl border border-slate-200">
+                        <span class="font-mono font-bold text-sena-green">@Getter, @Setter, @NoArgsConstructor</span>
+                        <p class="text-slate-600 text-[11px] mt-1">Anotaciones de Lombok, no de JPA: generan accesores y un constructor vacío que JPA necesita para materializar entidades, reduciendo código repetido.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-purple-50 p-5 rounded-2xl border border-purple-200 text-xs text-purple-950 leading-relaxed">
+                <strong>¿Por qué las anotaciones van en la Entidad?</strong> La entidad es el modelo persistente: sus anotaciones describen a Hibernate cómo convertir objetos Java en tablas, columnas, claves y relaciones. No pongas <code class="font-mono">@RestController</code> ni <code class="font-mono">@Service</code> aquí; pertenecen a otras capas.
+            </div>
+
+            <div class="bg-white p-6 rounded-3xl border border-purple-200 shadow-sm space-y-4">
+                <h4 class="font-bold text-slate-800 text-sm">Otras anotaciones JPA que puedes necesitar en una Entity</h4>
+                <p class="text-xs text-slate-600">No se agregan todas por defecto: elige según el esquema y el comportamiento que necesite el dominio.</p>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+                    <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200">
+                        <code class="font-mono font-bold text-purple-700">@SequenceGenerator</code>
+                        <p class="text-slate-600 mt-1">Nombra y configura una secuencia de la base de datos. Se usa junto con <code class="font-mono">@GeneratedValue(strategy = SEQUENCE, generator = "...")</code> cuando PostgreSQL o el esquema existente asigna IDs mediante una secuencia. No se combina como estrategia activa con UUID o IDENTITY.</p>
+                    </div>
+                    <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200">
+                        <code class="font-mono font-bold text-purple-700">@Version</code>
+                        <p class="text-slate-600 mt-1">Marca una columna de versión para control de concurrencia optimista. Hibernate detecta si otra transacción modificó la fila y evita sobrescribir silenciosamente ese cambio.</p>
+                    </div>
+                    <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200">
+                        <code class="font-mono font-bold text-purple-700">@Transient</code>
+                        <p class="text-slate-600 mt-1">Excluye un campo de la persistencia JPA. Úsala para un valor calculado temporal; no para datos que deban consultarse o guardarse en una columna.</p>
+                    </div>
+                    <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200">
+                        <code class="font-mono font-bold text-purple-700">@PrePersist / @PreUpdate</code>
+                        <p class="text-slate-600 mt-1">Indican métodos de ciclo de vida que se ejecutan antes de insertar o actualizar. Son útiles para inicializar marcas de tiempo; usa <code class="font-mono">updatable = false</code> en la columna de creación si no debe cambiar después.</p>
+                    </div>
+                    <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200">
+                        <code class="font-mono font-bold text-purple-700">@OneToMany(mappedBy = "...")</code>
+                        <p class="text-slate-600 mt-1">Representa el lado inverso de una relación uno-a-muchos, por ejemplo una sala con sus equipos. <code class="font-mono">mappedBy</code> apunta al atributo <code class="font-mono">room</code> de <code class="font-mono">EquipmentEntity</code>; la FK se mantiene en el lado <code class="font-mono">@ManyToOne</code>.</p>
+                    </div>
+                    <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200">
+                        <code class="font-mono font-bold text-purple-700">@OneToOne / @ManyToMany</code>
+                        <p class="text-slate-600 mt-1">Modelan relaciones uno-a-uno o muchos-a-muchos cuando el dominio realmente las exige. La relación muchos-a-muchos suele necesitar una tabla de unión; si esa unión tiene datos propios, es preferible convertirla en una entidad intermedia.</p>
+                    </div>
+                </div>
+                <div class="bg-amber-50 p-4 rounded-2xl border border-amber-200 text-xs text-amber-950">
+                    <strong>Regla práctica:</strong> mantén las entidades enfocadas en persistencia. Evita poner <code class="font-mono">@Data</code> de Lombok en entidades con relaciones: su <code class="font-mono">equals</code>, <code class="font-mono">hashCode</code> o <code class="font-mono">toString</code> generados pueden recorrer relaciones lazy o producir ciclos. Para enviar JSON, convierte la entidad a un DTO.
+                </div>
+            </div>
+
+            <!-- ENTIDADES EJEMPLO EN CLASE -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 font-mono text-xs">
+                <!-- UserEntity -->
+                <div class="bg-slate-900 text-white rounded-3xl border border-slate-800 p-5 space-y-2">
+                    <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+                        <span class="text-sky-400 font-bold">📁 UserEntity.java (Ejemplo Guía)</span>
+                        <span class="text-slate-400 text-[10px]">Tabla: users</span>
+                    </div>
+                    <pre class="bg-slate-950 text-emerald-400 p-3.5 rounded-2xl overflow-x-auto border border-slate-800 text-[11px]">
+package com.sena.controllabs.entity;
+
+import jakarta.persistence.*;
+import lombok.*;
+import java.time.OffsetDateTime;
+import java.util.UUID;
+
+@Entity
+@Table(name = "users")
+@Getter @Setter
+@NoArgsConstructor @AllArgsConstructor
+public class UserEntity {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
+
+    @Column(nullable = false, unique = true)
+    private String email;
+
+    @Column(nullable = false, length = 150)
+    private String nombre;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private UserRole rol;
+
+    @Column(nullable = false)
+    private Boolean activo = true;
+
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private OffsetDateTime createdAt = OffsetDateTime.now();
+
+    public enum UserRole {
+        ADMIN, GUARDA, INSTRUCTOR
+    }
+}</pre>
+                </div>
+
+                <!-- RoomEntity -->
+                <div class="bg-slate-900 text-white rounded-3xl border border-slate-800 p-5 space-y-2">
+                    <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+                        <span class="text-sky-400 font-bold">📁 RoomEntity.java (Ejemplo Guía)</span>
+                        <span class="text-slate-400 text-[10px]">Tabla: rooms</span>
+                    </div>
+                    <pre class="bg-slate-950 text-emerald-400 p-3.5 rounded-2xl overflow-x-auto border border-slate-800 text-[11px]">
+package com.sena.controllabs.entity;
+
+import jakarta.persistence.*;
+import lombok.*;
+import java.util.UUID;
+
+@Entity
+@Table(name = "rooms")
+@Getter @Setter
+@NoArgsConstructor @AllArgsConstructor
+public class RoomEntity {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
+
+    @Column(nullable = false, unique = true, length = 100)
+    private String nombre;
+
+    @Column(nullable = false, length = 50)
+    private String bloque;
+
+    @Column(name = "capacidad_pcs", nullable = false)
+    private Integer capacidadPcs;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private RoomStatus estado = RoomStatus.OPERATIVO;
+
+    public enum RoomStatus {
+        OPERATIVO, MANTENIMIENTO, INACTIVO
+    }
+}</pre>
+                </div>
+            </div>
+
+            <!-- LoanEntity -->
+            <div class="bg-slate-900 text-white rounded-3xl border border-slate-800 p-6 font-mono text-xs space-y-3">
+                <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                    <span class="text-sky-400 font-bold">📁 LoanEntity.java (Ejemplo Guía con Relaciones @ManyToOne)</span>
+                    <span class="text-slate-400 text-[10px]">Tabla: loans (BIGINT Identity)</span>
+                </div>
+                <pre class="bg-slate-950 text-emerald-400 p-4 rounded-2xl overflow-x-auto border border-slate-800 text-[11px]">
+package com.sena.controllabs.entity;
+
+import jakarta.persistence.*;
+import lombok.*;
+import java.time.OffsetDateTime;
+
+@Entity
+@Table(name = "loans")
+@Getter @Setter
+@NoArgsConstructor @AllArgsConstructor
+public class LoanEntity {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @ManyToOne(optional = false, fetch = FetchType.LAZY)
+    @JoinColumn(name = "room_id", nullable = false)
+    private RoomEntity room;
+
+    @ManyToOne(optional = false, fetch = FetchType.LAZY)
+    @JoinColumn(name = "instructor_id", nullable = false)
+    private UserEntity instructor;
+
+    @ManyToOne(optional = false, fetch = FetchType.LAZY)
+    @JoinColumn(name = "guarda_id", nullable = false)
+    private UserEntity guarda;
+
+    @Column(name = "numero_pc", nullable = false)
+    private Integer numeroPc;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 24)
+    private LoanStatus estado = LoanStatus.PENDIENTE_APROBACION;
+
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private OffsetDateTime createdAt = OffsetDateTime.now();
+
+    @Column(name = "accepted_at")
+    private OffsetDateTime acceptedAt;
+
+    public enum LoanStatus {
+        PENDIENTE_APROBACION, APROBADO_Y_FIRMADO
+    }
+}</pre>
+            </div>
+
+            <!-- RETO PRÁCTICO APRENDICES CON DESPLEGABLE SOLUCIÓN -->
+            <div class="bg-amber-50 p-6 rounded-3xl border border-amber-200 space-y-4">
+                <div class="flex items-center gap-3 text-amber-700">
+                    <div class="p-2.5 bg-amber-100 rounded-xl">
+                        <i class="fa-solid fa-pen-ruler text-xl"></i>
+                    </div>
+                    <div>
+                        <h4 class="font-bold text-slate-800 text-sm">✏️ Ejercicio en Clase: Entidades `EquipmentEntity` e `IncidentEntity`</h4>
+                        <p class="text-xs text-amber-800">Los aprendices crean estas dos entidades guiándose por el script SQL de PostgreSQL.</p>
+                    </div>
+                </div>
+
+                <details class="bg-slate-900 text-white rounded-2xl border border-slate-800 overflow-hidden group">
+                    <summary class="p-3.5 font-mono text-xs font-bold text-sena-green cursor-pointer flex items-center justify-between hover:bg-slate-850 transition-colors">
+                        <span>👁️ Ver Solución de Referencia para el Instructor (`EquipmentEntity` & `IncidentEntity`)</span>
+                        <span class="text-slate-400 group-open:rotate-180 transition-transform">▼</span>
+                    </summary>
+                    <div class="p-4 border-t border-slate-800 grid grid-cols-1 lg:grid-cols-2 gap-4 font-mono text-xs">
+                        <div>
+                            <span class="text-sky-400 font-bold block mb-1">📁 EquipmentEntity.java</span>
+                            <pre class="bg-slate-950 text-emerald-400 p-3 rounded-xl overflow-x-auto border border-slate-800 text-[10px]">
+@Entity
+@Table(name = "equipment")
+@Getter @Setter @NoArgsConstructor @AllArgsConstructor
+public class EquipmentEntity {
+    @Id @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
+
+    @Column(name = "placa_sena", nullable = false, unique = true, length = 50)
+    private String placaSena;
+
+    @Column(name = "codigo_activo", nullable = false, unique = true, length = 100)
+    private String codigoActivo;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 50)
+    private EquipmentType tipo;
+
+    @ManyToOne(optional = false, fetch = FetchType.LAZY)
+    @JoinColumn(name = "room_id", nullable = false)
+    private RoomEntity room;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private EquipmentStatus estado = EquipmentStatus.OPERATIVO;
+
+    public enum EquipmentType { COMPUTADOR, MOUSE, TECLADO, CARGADOR, TELEVISOR, CONTROL_TV }
+    public enum EquipmentStatus { OPERATIVO, MANTENIMIENTO, FUERA_DE_SERVICIO }
+}</pre>
+                        </div>
+                        <div>
+                            <span class="text-sky-400 font-bold block mb-1">📁 IncidentEntity.java</span>
+                            <pre class="bg-slate-950 text-emerald-400 p-3 rounded-xl overflow-x-auto border border-slate-800 text-[10px]">
+@Entity
+@Table(name = "incidents")
+@Getter @Setter @NoArgsConstructor @AllArgsConstructor
+public class IncidentEntity {
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @ManyToOne(optional = false, fetch = FetchType.LAZY)
+    @JoinColumn(name = "equipment_id", nullable = false)
+    private EquipmentEntity equipment;
+
+    @ManyToOne(optional = false, fetch = FetchType.LAZY)
+    @JoinColumn(name = "reported_by", nullable = false)
+    private UserEntity reportedBy;
+
+    @Column(nullable = false, columnDefinition = "TEXT")
+    private String descripcion;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 10)
+    private IncidentPriority prioridad;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 16)
+    private IncidentStatus estado = IncidentStatus.PENDIENTE;
+
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private OffsetDateTime createdAt = OffsetDateTime.now();
+
+    public enum IncidentPriority { BAJA, MEDIA, ALTA }
+    public enum IncidentStatus { PENDIENTE, EN_PROCESO, RESUELTA }
+}</pre>
+                        </div>
+                    </div>
+                </details>
+            </div>
+        </section>
+
+        <!-- SECCIÓN 5: CREACIÓN DE LA CAPA REPOSITORY PASO A PASO -->
+        <section id="repositories" class="scroll-mt-header space-y-8">
+            <div class="border-l-4 border-sky-500 pl-4">
+                <h3 class="text-2xl font-bold text-sena-dark tracking-tight">5. Capa Repository: Repositorios CRUD Base</h3>
+                <p class="text-slate-500 text-sm">Cada interfaz hereda de `JpaRepository&lt;Entidad, ID&gt;` y utiliza solo las operaciones CRUD que Spring Data proporciona.</p>
+            </div>
+
+            <!-- Explicación de Generics y Optional -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-xs font-sans">
+                <div class="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm space-y-2">
+                    <span class="bg-indigo-600 text-white font-mono font-bold px-2.5 py-1 rounded text-[10px]">1. Genéricos &lt;Entidad, TipoID&gt;</span>
+                    <p class="text-slate-600 leading-relaxed pt-1">
+                        Al escribir <code class="font-mono text-indigo-700 font-bold">extends JpaRepository&lt;UserEntity, UUID&gt;</code>, Spring proporciona los métodos CRUD (`save`, `findAll`, `findById`, `deleteById`) sin SQL ni métodos de búsqueda personalizados.
+                    </p>
+                </div>
+                <div class="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm space-y-2">
+                    <span class="bg-sena-green text-white font-mono font-bold px-2.5 py-1 rounded text-[10px]">2. ¿Qué es Optional&lt;T&gt;?</span>
+                    <p class="text-slate-600 leading-relaxed pt-1">
+                        Es una "caja segura" de Java que puede contener un resultado o estar vacía. <code class="font-mono">findById(id)</code> devuelve un <code class="font-mono">Optional&lt;T&gt;</code> para representar que un registro puede no existir.
+                    </p>
+                </div>
+            </div>
+
+            <div class="bg-sky-50 p-5 rounded-2xl border border-sky-200 space-y-3 text-xs">
+                <h4 class="font-bold text-slate-800 text-sm">Referencia: anotaciones y convenciones del Repository</h4>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-slate-700">
+                    <p><code class="font-mono font-bold text-sky-700">@Repository</code> marca la interfaz como componente de acceso a datos y permite que Spring la detecte. Spring Data crea la implementación automáticamente; en muchos proyectos Spring la detección de interfaces JPA hace que esta anotación sea opcional, pero aquí se muestra explícitamente.</p>
+                    <p><code class="font-mono font-bold text-sky-700">extends JpaRepository&lt;Entidad, ID&gt;</code> no es una anotación: hereda operaciones CRUD y paginación, y le dice a Spring Data qué entidad y tipo de identificador administrar.</p>
+                    <p class="md:col-span-2">En esta guía no se declaran métodos <code class="font-mono">findBy...</code>, <code class="font-mono">@Query</code>, <code class="font-mono">@Param</code>, derived queries ni JPQL. Cuando se requiera buscar por otros campos, esa decisión se agregará en otra etapa; por ahora cada Repository conserva solo el CRUD heredado.</p>
+                    <p class="md:col-span-2">El Repository no lleva <code class="font-mono">@Service</code> ni conoce HTTP. El acceso a los datos se invoca desde la capa Service.</p>
+                </div>
+            </div>
+
+            <!-- Repositorios CRUD base -->
+            <div class="bg-white p-6 md:p-8 rounded-3xl border border-slate-200 shadow-sm space-y-6">
+                <h4 class="font-bold text-slate-800 text-base flex items-center gap-2">
+                    <i class="fa-solid fa-code-branch text-sena-blue"></i> Interfaces Repository: solo CRUD base
+                </h4>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-5 font-mono text-xs">
+                    <!-- UserRepository -->
+                    <div class="bg-slate-900 text-white p-4 rounded-2xl border border-slate-800 space-y-2">
+                        <span class="text-sky-400 font-bold block">📁 UserRepository.java</span>
+                        <p class="text-[10px] text-slate-400 font-sans">CRUD base para usuarios identificados por UUID.</p>
+                        <pre class="bg-slate-950 text-emerald-400 p-3 rounded-xl overflow-x-auto border border-slate-800 text-[11px]">
+package com.sena.controllabs.repository;
+
+import com.sena.controllabs.entity.UserEntity;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+import java.util.UUID;
+
+@Repository
+public interface UserRepository 
+       extends JpaRepository&lt;UserEntity, UUID&gt; {
+}</pre>
+                    </div>
+
+                    <!-- RoomRepository -->
+                    <div class="bg-slate-900 text-white p-4 rounded-2xl border border-slate-800 space-y-2">
+                        <span class="text-sky-400 font-bold block">📁 RoomRepository.java</span>
+                        <p class="text-[10px] text-slate-400 font-sans">CRUD base para ambientes identificados por UUID.</p>
+                        <pre class="bg-slate-950 text-emerald-400 p-3 rounded-xl overflow-x-auto border border-slate-800 text-[11px]">
+package com.sena.controllabs.repository;
+
+import com.sena.controllabs.entity.RoomEntity;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+import java.util.UUID;
+
+@Repository
+public interface RoomRepository 
+       extends JpaRepository&lt;RoomEntity, UUID&gt; {
+}</pre>
+                    </div>
+
+                    <!-- LoanRepository -->
+                    <div class="bg-slate-900 text-white p-4 rounded-2xl border border-slate-800 space-y-2">
+                        <span class="text-sky-400 font-bold block">📁 LoanRepository.java</span>
+                        <p class="text-[10px] text-slate-400 font-sans">CRUD base para préstamos identificados por Long.</p>
+                        <pre class="bg-slate-950 text-emerald-400 p-3 rounded-xl overflow-x-auto border border-slate-800 text-[11px]">
+package com.sena.controllabs.repository;
+
+import com.sena.controllabs.entity.LoanEntity;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+@Repository
+public interface LoanRepository 
+       extends JpaRepository&lt;LoanEntity, Long&gt; {
+}</pre>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECCIÓN 6: CAPA SERVICE PASSTHROUGH (SIN LÓGICA DE NEGOCIO) -->
+        <section id="capa-service" class="scroll-mt-header space-y-8">
+            <div class="border-l-4 border-amber-500 pl-4">
+                <h3 class="text-2xl font-bold text-sena-dark tracking-tight">6. Capa Service (`@Service`): Puente Passthrough hacia el Repositorio</h3>
+                <p class="text-slate-500 text-sm">Creamos la capa intermedia de servicios delegando directamente al repositorio, dejando lista la arquitectura limpia sin lógica compleja aún.</p>
+            </div>
+
+            <!-- Explicación conceptual rápida -->
+            <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-4">
+                <div class="flex items-center gap-3 text-amber-600">
+                    <div class="p-2.5 bg-amber-100 rounded-xl">
+                        <i class="fa-solid fa-shield-halved text-xl"></i>
+                    </div>
+                    <div>
+                        <h4 class="font-bold text-slate-800 text-base">¿Por qué crear el Servicio si hoy solo llama al Repositorio?</h4>
+                        <p class="text-xs text-slate-500">El Controller nunca debe hablar directamente con la Base de Datos (`Repository`).</p>
+                    </div>
+                </div>
+                <p class="text-xs text-slate-600 leading-relaxed">
+                    Al implementar el patrón <strong>Interfaz (`*Service`) + Implementación (`*ServiceImpl`)</strong> como un puente limpio (<em>Passthrough</em>), desacoplamos el protocolo HTTP del acceso a datos. En la próxima sesión agregaremos aquí las reglas de negocio del SENA (validaciones de disponibilidad de equipos, cambios de estado y firma) sin tener que modificar una sola línea de nuestros Controladores.
+                </p>
+
+                <!-- Diagrama visual corto -->
+                <div class="bg-slate-900 text-white p-4 rounded-2xl flex flex-wrap items-center justify-center gap-3 font-mono text-xs">
+                    <span class="bg-purple-600 px-3 py-1.5 rounded-lg font-bold">Controller (@RestController)</span>
+                    <i class="fa-solid fa-arrow-right text-sena-green"></i>
+                    <span class="bg-amber-600 px-3 py-1.5 rounded-lg font-bold">Service (@Service Passthrough)</span>
+                    <i class="fa-solid fa-arrow-right text-sena-green"></i>
+                    <span class="bg-sky-600 px-3 py-1.5 rounded-lg font-bold">Repository (JpaRepository)</span>
+                    <i class="fa-solid fa-arrow-right text-sena-green"></i>
+                    <span class="bg-emerald-700 px-3 py-1.5 rounded-lg font-bold">PostgreSQL</span>
+                </div>
+            </div>
+
+            <div class="bg-amber-50 p-5 rounded-2xl border border-amber-200 space-y-3 text-xs">
+                <h4 class="font-bold text-slate-800 text-sm">Referencia: anotaciones en la capa Service</h4>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-slate-700">
+                    <p><code class="font-mono font-bold text-amber-700">@Service</code> registra la clase de implementación como un bean de Spring y comunica su responsabilidad: coordinar casos de uso y reglas de negocio. Aquí se usa en <code class="font-mono">*ServiceImpl</code>, no en la interfaz.</p>
+                    <p><code class="font-mono font-bold text-amber-700">@Override</code> es una anotación de Java, no de Spring: el compilador confirma que cada método implementa o sobrescribe uno declarado en la interfaz.</p>
+                    <p class="md:col-span-2">La inyección por constructor mostrada en los ejemplos no necesita anotación: Spring detecta el constructor único y provee el Repository. Hace explícita la dependencia y facilita las pruebas. En esta sesión el servicio solo delega; las reglas de negocio se agregarán aquí más adelante.</p>
+                </div>
+            </div>
+
+            <!-- Código de los 3 Servicios Passthrough -->
+            <div class="space-y-6 font-mono text-xs">
+                <!-- 1. RoomService & RoomServiceImpl -->
+                <div class="bg-slate-900 text-white rounded-3xl border border-slate-800 p-6 space-y-4">
+                    <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+                        <span class="text-amber-400 font-bold">📁 1. Servicio de Ambientes (`RoomService` & `RoomServiceImpl`)</span>
+                        <span class="text-slate-400 text-[10px]">Delegación directa a RoomRepository</span>
+                    </div>
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                        <div>
+                            <span class="text-sky-400 text-[11px] block mb-1">com/sena/controllabs/service/RoomService.java</span>
+                            <pre class="bg-slate-950 text-emerald-400 p-3.5 rounded-2xl overflow-x-auto border border-slate-800 text-[11px]">
+package com.sena.controllabs.service;
+
+import com.sena.controllabs.entity.RoomEntity;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
+public interface RoomService {
+    List&lt;RoomEntity&gt; findAll();
+    Optional&lt;RoomEntity&gt; findById(UUID id);
+    RoomEntity save(RoomEntity room);
+}</pre>
+                        </div>
+                        <div>
+                            <span class="text-sena-green text-[11px] block mb-1">com/sena/controllabs/service/impl/RoomServiceImpl.java</span>
+                            <pre class="bg-slate-950 text-emerald-400 p-3.5 rounded-2xl overflow-x-auto border border-slate-800 text-[11px]">
+package com.sena.controllabs.service.impl;
+
+import com.sena.controllabs.entity.RoomEntity;
+import com.sena.controllabs.repository.RoomRepository;
+import com.sena.controllabs.service.RoomService;
+import org.springframework.stereotype.Service;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
+@Service
+public class RoomServiceImpl implements RoomService {
+
+    private final RoomRepository roomRepository;
+
+    public RoomServiceImpl(RoomRepository roomRepository) {
+        this.roomRepository = roomRepository;
+    }
+
+    @Override
+    public List&lt;RoomEntity&gt; findAll() {
+        return roomRepository.findAll(); // Passthrough directo
+    }
+
+    @Override
+    public Optional&lt;RoomEntity&gt; findById(UUID id) {
+        return roomRepository.findById(id);
+    }
+
+    @Override
+    public RoomEntity save(RoomEntity room) {
+        return roomRepository.save(room);
+    }
+}</pre>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. UserService & LoanService -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- UserServiceImpl -->
+                    <div class="bg-slate-900 text-white rounded-3xl border border-slate-800 p-5 space-y-2">
+                        <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+                            <span class="text-amber-400 font-bold">📁 2. UserServiceImpl.java</span>
+                            <span class="text-slate-400 text-[10px]">Implementa UserService</span>
+                        </div>
+                        <pre class="bg-slate-950 text-emerald-400 p-3.5 rounded-2xl overflow-x-auto border border-slate-800 text-[11px]">
+package com.sena.controllabs.service.impl;
+
+import com.sena.controllabs.entity.UserEntity;
+import com.sena.controllabs.repository.UserRepository;
+import com.sena.controllabs.service.UserService;
+import org.springframework.stereotype.Service;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
+@Service
+public class UserServiceImpl implements UserService {
+
+    private final UserRepository userRepository;
+
+    public UserServiceImpl(UserRepository userRepository) {
+        this.userRepository = userRepository;
+    }
+
+    @Override
+    public List&lt;UserEntity&gt; findAll() {
+        return userRepository.findAll();
+    }
+
+    @Override
+    public Optional&lt;UserEntity&gt; findById(UUID id) {
+        return userRepository.findById(id);
+    }
+
+    @Override
+    public UserEntity save(UserEntity user) {
+        return userRepository.save(user);
+    }
+}</pre>
+                    </div>
+
+                    <!-- LoanServiceImpl -->
+                    <div class="bg-slate-900 text-white rounded-3xl border border-slate-800 p-5 space-y-2">
+                        <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+                            <span class="text-amber-400 font-bold">📁 3. LoanServiceImpl.java</span>
+                            <span class="text-slate-400 text-[10px]">Implementa LoanService</span>
+                        </div>
+                        <pre class="bg-slate-950 text-emerald-400 p-3.5 rounded-2xl overflow-x-auto border border-slate-800 text-[11px]">
+package com.sena.controllabs.service.impl;
+
+import com.sena.controllabs.entity.LoanEntity;
+import com.sena.controllabs.repository.LoanRepository;
+import com.sena.controllabs.service.LoanService;
+import org.springframework.stereotype.Service;
+import java.util.List;
+import java.util.Optional;
+
+@Service
+public class LoanServiceImpl implements LoanService {
+
+    private final LoanRepository loanRepository;
+
+    public LoanServiceImpl(LoanRepository loanRepository) {
+        this.loanRepository = loanRepository;
+    }
+
+    @Override
+    public List&lt;LoanEntity&gt; findAll() {
+        return loanRepository.findAll();
+    }
+
+    @Override
+    public Optional&lt;LoanEntity&gt; findById(Long id) {
+        return loanRepository.findById(id);
+    }
+
+    @Override
+    public LoanEntity save(LoanEntity loan) {
+        return loanRepository.save(loan);
+    }
+}</pre>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECCIÓN 7: SOLUCIÓN SIMPLIFICADA: MÉTODOS DE CONVERSIÓN EN LOS PROPIOS DTO RECORDS -->
+        <section id="mapeo-dtos" class="scroll-mt-header space-y-8">
+            <div class="border-l-4 border-pink-500 pl-4">
+                <h3 class="text-2xl font-bold text-sena-dark tracking-tight">7. Solución Simplificada: Conversión DTO &harr; Entity en los propios Records</h3>
+                <p class="text-slate-500 text-sm">Para evitar crear archivos o carpetas `mapper/` adicionales, aprovechamos los <strong>Java 17 Records</strong> agregando métodos de conversión directos (`toEntity()` y `fromEntity(...)`).</p>
+            </div>
+
+            <!-- Explicación conceptual del puente -->
+            <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-4">
+                <div class="flex items-center gap-3 text-pink-600">
+                    <div class="p-2.5 bg-pink-100 rounded-xl">
+                        <i class="fa-solid fa-wand-magic-sparkles text-xl"></i>
+                    </div>
+                    <div>
+                        <h4 class="font-bold text-slate-800 text-base">Arquitectura Limpia y Sin Archivos Extra</h4>
+                        <p class="text-xs text-slate-500">Cada DTO sabe cómo convertirse a Entidad (Request) o cómo construirse desde una Entidad (Response).</p>
+                    </div>
+                </div>
+                <p class="text-xs text-slate-600 leading-relaxed">
+                    El Controller recibe un <code class="font-mono font-bold text-pink-700">RoomCreateRequest</code> y llama a su método <code class="font-mono font-bold text-sena-green">.toEntity()</code> para obtener la <code class="font-mono font-bold text-purple-700">RoomEntity</code> que necesita el Servicio. Cuando el Servicio devuelve la entidad guardada, llamamos al método estático <code class="font-mono font-bold text-sena-blue">RoomResponse.fromEntity(...)</code>. ¡Cero clases extra y cero dependencias!
+                </p>
+
+                <!-- Flujo de tipos -->
+                <div class="bg-slate-900 text-white p-4 rounded-2xl flex flex-wrap items-center justify-center gap-2 font-mono text-[11px]">
+                    <span class="bg-sky-700 px-2.5 py-1 rounded">JSON Request</span>
+                    <span>&rarr;</span>
+                    <span class="bg-pink-600 px-2.5 py-1 rounded font-bold">requestDto.toEntity()</span>
+                    <span>&rarr;</span>
+                    <span class="bg-amber-600 px-2.5 py-1 rounded font-bold">Service (Entity)</span>
+                    <span>&rarr;</span>
+                    <span class="bg-emerald-700 px-2.5 py-1 rounded font-bold">Repository (Entity)</span>
+                    <span>&rarr;</span>
+                    <span class="bg-purple-600 px-2.5 py-1 rounded font-bold">ResponseDto.fromEntity()</span>
+                </div>
+            </div>
+
+            <div class="bg-pink-50 p-5 rounded-2xl border border-pink-200 space-y-3 text-xs">
+                <h4 class="font-bold text-slate-800 text-sm">Referencia: anotaciones de validación en los DTOs</h4>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-slate-700">
+                    <p><code class="font-mono font-bold text-pink-700">@NotBlank</code> rechaza texto nulo, vacío o compuesto solo por espacios; se aplica a los campos de texto obligatorios.</p>
+                    <p><code class="font-mono font-bold text-pink-700">@NotNull</code> rechaza valores ausentes o nulos. En <code class="font-mono">totalPcs</code> es necesaria porque es un <code class="font-mono">Integer</code> nullable.</p>
+                    <p><code class="font-mono font-bold text-pink-700">@Min(1)</code> establece el mínimo permitido para la cantidad de PCs. Es una restricción numérica y complementa a <code class="font-mono">@NotNull</code>.</p>
+                    <p class="md:col-span-3">Las restricciones declaran qué datos acepta el request. Por sí solas no validan nada: el Controller debe activar la validación con <code class="font-mono">@Valid</code>. Los DTOs de respuesta no llevan estas restricciones porque contienen datos ya procesados para enviar al cliente.</p>
+                </div>
+            </div>
+
+            <div class="bg-white p-6 rounded-3xl border border-pink-200 shadow-sm space-y-4">
+                <h4 class="font-bold text-slate-800 text-sm">Otras anotaciones útiles para DTOs</h4>
+                <p class="text-xs text-slate-600">Escoge las restricciones que describan el contrato de cada request. No es necesario añadirlas todas a cada campo.</p>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 text-xs text-slate-700">
+                    <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200">
+                        <code class="font-mono font-bold text-pink-700">@Email</code>
+                        <p class="mt-1">Comprueba que un texto tenga formato de correo. Si el campo también es obligatorio, combínala con <code class="font-mono">@NotBlank</code>: <code class="font-mono">@Email @NotBlank String email</code>.</p>
+                    </div>
+                    <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200">
+                        <code class="font-mono font-bold text-pink-700">@Size(min = 2, max = 100)</code>
+                        <p class="mt-1">Limita la longitud de cadenas o el tamaño de colecciones. No exige que el valor exista; combínala con <code class="font-mono">@NotBlank</code> o <code class="font-mono">@NotNull</code> si es requerido.</p>
+                    </div>
+                    <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200">
+                        <code class="font-mono font-bold text-pink-700">@Pattern(regexp = "...")</code>
+                        <p class="mt-1">Exige que una cadena coincida con una expresión regular, por ejemplo un código con formato específico. Añade un mensaje claro y evita patrones más complejos de lo necesario.</p>
+                    </div>
+                    <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200">
+                        <code class="font-mono font-bold text-pink-700">@Positive / @PositiveOrZero</code>
+                        <p class="mt-1">Valida números mayores que cero o mayores/iguales a cero. Igual que <code class="font-mono">@Min</code>, no rechaza por sí sola el valor nulo; combínala con <code class="font-mono">@NotNull</code> si hace falta.</p>
+                    </div>
+                    <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200">
+                        <code class="font-mono font-bold text-pink-700">@Past / @Future</code>
+                        <p class="mt-1">Restringe fechas a un instante anterior o posterior al actual. Para fechas opcionales, la mayoría de estas restricciones permite <code class="font-mono">null</code>; agrega <code class="font-mono">@NotNull</code> cuando sea obligatorio.</p>
+                    </div>
+                    <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200">
+                        <code class="font-mono font-bold text-pink-700">@NotEmpty</code>
+                        <p class="mt-1">Rechaza nulo y vacío en cadenas, colecciones o arreglos, pero una cadena de espacios puede pasar. Para texto obligatorio normalmente conviene <code class="font-mono">@NotBlank</code>.</p>
+                    </div>
+                    <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200">
+                        <code class="font-mono font-bold text-pink-700">@Valid</code>
+                        <p class="mt-1">También sirve en una propiedad anidada o en cada elemento de una lista para activar la validación recursiva: <code class="font-mono">List&lt;@Valid ItemRequest&gt;</code>.</p>
+                    </div>
+                    <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200">
+                        <code class="font-mono font-bold text-pink-700">@JsonProperty / @JsonIgnore</code>
+                        <p class="mt-1">De Jackson, no de Bean Validation: permiten fijar el nombre JSON de una propiedad o excluirla de la serialización. Úsalas solo si el contrato JSON requiere un nombre distinto o el campo no debe exponerse.</p>
+                    </div>
+                    <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200">
+                        <code class="font-mono font-bold text-pink-700">Constraint personalizada</code>
+                        <p class="mt-1">Para reglas entre varios campos (por ejemplo, fecha final posterior a fecha inicial), crea una anotación propia con un validador de clase. No fuerces esa regla dentro de una expresión regular.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Código de los Records con Conversión Integrada -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 font-mono text-xs">
+                <!-- RoomCreateRequest -->
+                <div class="bg-slate-900 text-white rounded-3xl border border-slate-800 p-5 space-y-2">
+                    <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+                        <span class="text-pink-400 font-bold">📁 com/sena/controllabs/dto/RoomCreateRequest.java</span>
+                        <span class="text-slate-400 text-[10px]">Incluye .toEntity()</span>
+                    </div>
+                    <pre class="bg-slate-950 text-emerald-400 p-3.5 rounded-2xl overflow-x-auto border border-slate-800 text-[11px]">
+package com.sena.controllabs.dto;
+
+import com.sena.controllabs.entity.RoomEntity;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+
+public record RoomCreateRequest(
+        @NotBlank(message = "El nombre es obligatorio")
+        String name,
+
+        @NotBlank(message = "El bloque es obligatorio")
+        String locationBlock,
+
+        @NotNull(message = "La capacidad de PCs es obligatoria")
+        @Min(value = 1, message = "Mínimo 1 PC")
+        Integer totalPcs
+) {
+    // Convierte este DTO directamente en una Entidad JPA
+    public RoomEntity toEntity() {
+        RoomEntity entity = new RoomEntity();
+        entity.setNombre(this.name);
+        entity.setBloque(this.locationBlock);
+        entity.setCapacidadPcs(this.totalPcs);
+        entity.setEstado(RoomEntity.RoomStatus.OPERATIVO);
+        return entity;
+    }
+}</pre>
+                </div>
+
+                <!-- RoomResponse -->
+                <div class="bg-slate-900 text-white rounded-3xl border border-slate-800 p-5 space-y-2">
+                    <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+                        <span class="text-sky-400 font-bold">📁 com/sena/controllabs/dto/RoomResponse.java</span>
+                        <span class="text-slate-400 text-[10px]">Incluye .fromEntity(...)</span>
+                    </div>
+                    <pre class="bg-slate-950 text-emerald-400 p-3.5 rounded-2xl overflow-x-auto border border-slate-800 text-[11px]">
+package com.sena.controllabs.dto;
+
+import com.sena.controllabs.entity.RoomEntity;
+import java.util.UUID;
+
+public record RoomResponse(
+        UUID id,
+        String nombre,
+        String bloque,
+        Integer capacidadPcs,
+        String estado
+) {
+    // Método de fábrica estático: Entity JPA -> DTO Response
+    public static RoomResponse fromEntity(RoomEntity entity) {
+        return new RoomResponse(
+                entity.getId(),
+                entity.getNombre(),
+                entity.getBloque(),
+                entity.getCapacidadPcs(),
+                entity.getEstado().name()
+        );
+    }
+}</pre>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECCIÓN 8: CONEXIÓN FINAL EN EL CONTROLLER USANDO DTOs + SERVICE -->
+        <section id="refactor-controller" class="scroll-mt-header space-y-6">
+            <div class="border-l-4 border-teal-500 pl-4">
+                <h3 class="text-2xl font-bold text-sena-dark tracking-tight">8. Conexión Final: Controller Ultra Limpio (DTOs + Service Passthrough)</h3>
+                <p class="text-slate-500 text-sm">El `@RestController` solo inyecta el `Service` y utiliza los métodos directos de los Records (`toEntity` y `fromEntity`).</p>
+            </div>
+
+            <div class="bg-teal-50 p-5 rounded-2xl border border-teal-200 space-y-3 text-xs">
+                <h4 class="font-bold text-slate-800 text-sm">Referencia: anotaciones en la capa Controller</h4>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-slate-700">
+                    <p><code class="font-mono font-bold text-teal-700">@RestController</code> registra el componente web y combina <code class="font-mono">@Controller</code> con <code class="font-mono">@ResponseBody</code>: los valores devueltos se serializan como JSON en vez de buscar una vista.</p>
+                    <p><code class="font-mono font-bold text-teal-700">@RequestMapping("/rooms")</code> define el prefijo común de las rutas de esta clase. Junto al prefijo global <code class="font-mono">/api/v1</code> forma la URL completa.</p>
+                    <p><code class="font-mono font-bold text-teal-700">@GetMapping</code>, <code class="font-mono">@PostMapping</code> y <code class="font-mono">@DeleteMapping</code> asocian métodos HTTP con métodos Java, manteniendo el Controller responsable de HTTP y no de acceder a JPA.</p>
+                    <p><code class="font-mono font-bold text-teal-700">@PathVariable</code> toma un valor de la ruta (por ejemplo, el UUID en <code class="font-mono">/rooms/{id}</code>); <code class="font-mono">@RequestParam</code> toma un parámetro de consulta opcional como <code class="font-mono">?block=A</code>.</p>
+                    <p><code class="font-mono font-bold text-teal-700">@RequestBody</code> convierte el cuerpo JSON del request al DTO correspondiente. <code class="font-mono">@Valid</code> ejecuta las restricciones de Bean Validation declaradas en ese DTO.</p>
+                    <p><code class="font-mono font-bold text-teal-700">ResponseEntity</code> no es una anotación: permite expresar explícitamente el estado HTTP y el cuerpo de la respuesta, como <code class="font-mono">201 Created</code> o <code class="font-mono">204 No Content</code>.</p>
+                </div>
+            </div>
+
+            <div class="bg-slate-900 text-white rounded-3xl border border-slate-800 p-6 font-mono text-xs space-y-3">
+                <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+                    <span class="text-teal-400 font-bold">📁 com/sena/controllabs/controller/RoomController.java (Sin Mapper Extra)</span>
+                    <span class="text-slate-400 text-[10px]">Solo inyecta RoomService</span>
+                </div>
+                <pre class="bg-slate-950 text-emerald-400 p-4 rounded-2xl overflow-x-auto border border-slate-800 text-[11px]">
+package com.sena.controllabs.controller;
+
+import com.sena.controllabs.dto.RoomCreateRequest;
+import com.sena.controllabs.dto.RoomResponse;
+import com.sena.controllabs.entity.RoomEntity;
+import com.sena.controllabs.service.RoomService;
+import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+@RestController
+@RequestMapping("/rooms")
+public class RoomController {
+
+    private final RoomService roomService;
+
+    // Solo inyectamos el Servicio, ¡el código queda súper limpio!
+    public RoomController(RoomService roomService) {
+        this.roomService = roomService;
+    }
+
+    @GetMapping
+    public ResponseEntity&lt;List&lt;RoomResponse&gt;&gt; getAllRooms() {
+        List&lt;RoomResponse&gt; responseList = roomService.findAll()
+                .stream()
+                .map(RoomResponse::fromEntity) // Conversión directa con referencia a método
+                .toList();
+
+        return ResponseEntity.ok(responseList);
+    }
+
+    @PostMapping
+    public ResponseEntity&lt;RoomResponse&gt; createRoom(@Valid @RequestBody RoomCreateRequest requestDto) {
+        // 1. Convertimos DTO -> Entity con .toEntity() y guardamos en el Service
+        RoomEntity savedEntity = roomService.save(requestDto.toEntity());
+
+        // 2. Convertimos Entity -> DTO con RoomResponse.fromEntity(...) y respondemos
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(RoomResponse.fromEntity(savedEntity));
+    }
+}</pre>
+            </div>
+        </section>
+
+        <!-- EJECUCIÓN LOCAL: VARIABLES DE ENTORNO Y PRUEBAS -->
+        <section class="scroll-mt-header space-y-6">
+            <div class="border-l-4 border-emerald-500 pl-4">
+                <h3 class="text-2xl font-bold text-sena-dark tracking-tight">Prueba el proyecto con PostgreSQL (Windows PowerShell)</h3>
+                <p class="text-slate-500 text-sm">Configura las credenciales de forma segura, valida la base de datos y ejecuta el API.</p>
+            </div>
+
+            <div class="bg-emerald-50 rounded-3xl border border-emerald-200 p-6 space-y-4">
+                <p class="text-slate-700 text-xs leading-relaxed">
+                    Las variables de entorno proporcionan a Spring Boot los datos de conexión sin guardar la contraseña en el código. Los comandos usan la base <code class="font-mono">controllabs</code>, el usuario <code class="font-mono">postgres</code> y la contraseña indicada para este entorno (<code class="font-mono">postgres</code>). Si tu contraseña es distinta, reemplaza ese valor. Antes, inicia PostgreSQL, crea la base de datos y ejecuta una sola vez el archivo <code class="font-mono">controllabs.sql</code> en esa base. Hibernate está configurado con <code class="font-mono">ddl-auto=validate</code>: valida las tablas y columnas existentes, pero no las crea.
+                </p>
+
+                <h4 class="font-bold text-slate-800 text-sm">1. Configura la conexión y prueba PostgreSQL</h4>
+                <p class="text-xs text-slate-600">Abre PowerShell en la carpeta raíz del proyecto y copia el bloque completo:</p>
+                <pre class="bg-slate-950 text-emerald-300 p-4 rounded-2xl overflow-x-auto border border-slate-800 text-[11px]">$env:DB_URL = "jdbc:postgresql://localhost:5432/controllabs"
+$env:DB_USERNAME = "postgres"
+$env:DB_PASSWORD = "postgres"
+</pre>
+                <p class="text-xs text-slate-600">
+                    Si termina con <code class="font-mono">BUILD SUCCESS</code>, se conectó a PostgreSQL, se validó el esquema y pasó el CRUD de prueba. La operación CRUD usa una transacción que se revierte al terminar. Las variables solo permanecen disponibles en esa ventana de PowerShell.
+                </p>
+
+                <h4 class="font-bold text-slate-800 text-sm">2. Inicia la aplicación</h4>
+                <p class="text-xs text-slate-600">En la misma terminal, ejecuta esto y déjala abierta mientras pruebas el servicio:</p>
+                <pre class="bg-slate-950 text-emerald-300 p-4 rounded-2xl overflow-x-auto border border-slate-800 text-[11px]">.\mvnw.cmd spring-boot:run</pre>
+
+
+            </div>
+        </section>
+
+        <!-- SECCIÓN 9: SIMULADOR INTERACTIVO UNIFICADO -->
+        <section id="simulador-completo" class="scroll-mt-header space-y-6">
+            <div class="border-l-4 border-rose-500 pl-4">
+                <h3 class="text-2xl font-bold text-sena-dark tracking-tight">9. Probador Interactivo: Traza Completa (DTO Record &rarr; Service &rarr; JPA &rarr; SQL)</h3>
+                <p class="text-slate-500 text-sm">Observa en tiempo real cómo se resuelven los tipos entre DTOs y Entities sin clases intermedias extra.</p>
+            </div>
+
+            <div class="bg-slate-950 rounded-3xl border border-slate-800 p-6 font-mono text-xs space-y-6 shadow-2xl">
+                <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                    <span class="text-emerald-400 font-bold flex items-center gap-2">
+                        <i class="fa-solid fa-terminal"></i> Consola de Ejecución Spring Boot + Hibernate
+                    </span>
+                    <span class="bg-slate-800 text-sena-green px-2.5 py-0.5 rounded text-[10px] font-bold">Flujo Simplificado</span>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-slate-400 font-sans font-bold mb-1">Selecciona el flujo de extremo a extremo:</label>
+                            <select id="unified-select" onchange="runUnifiedSimulation()" class="w-full bg-slate-900 border border-slate-700 p-2.5 rounded-xl font-bold text-amber-400 text-[11px]">
+                                <option value="ROOMS_ALL">GET /api/v1/rooms -> roomService.findAll()</option>
+                                <option value="USER_ID">GET /api/v1/users/{id} -> userService.findById(...)</option>
+                                <option value="LOAN_CREATE">POST /api/v1/loans -> loanService.save(dto.toEntity())</option>
+                            </select>
+                        </div>
+
+                        <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 space-y-1.5 text-[11px]">
+                            <span class="text-slate-400 font-sans block">Ruta de Inyección y Conversión de Tipos:</span>
+                            <div id="bean-chain" class="text-sky-300 font-bold">RoomController &rarr; RoomServiceImpl &rarr; RoomRepository &rarr; RoomResponse::fromEntity</div>
+                        </div>
+
+                        <button onclick="runUnifiedSimulation()" class="w-full bg-sena-green hover:bg-emerald-600 text-white font-bold p-3 rounded-xl shadow-md transition-all font-sans text-xs flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-play"></i> Ejecutar Traza Completa en Consola
+                        </button>
+                    </div>
+
+                    <div class="space-y-2">
+                        <label class="block text-slate-400 font-sans font-bold">Log en Tiempo Real (Spring + SQL PostgreSQL):</label>
+                        <pre id="unified-log-out" class="bg-slate-900 p-4 rounded-xl border border-slate-800 h-60 overflow-y-auto text-emerald-400 text-[11px]">
+// Presiona "Ejecutar Traza Completa en Consola" para ver el recorrido...</pre>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- RESUMEN: ARCHIVOS PARA INICIAR UN NUEVO MÓDULO -->
+        <section id="resumen-modulo" class="scroll-mt-header space-y-6">
+            <div class="border-l-4 border-sena-green pl-4">
+                <h3 class="text-2xl font-bold text-sena-dark tracking-tight">10. Resumen: archivos para crear un nuevo módulo</h3>
+                <p class="text-slate-500 text-sm">Usa esta lista como checklist inicial. Sustituye `Product` por el nombre del recurso del módulo.</p>
+            </div>
+
+            <div class="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-x-auto">
+                <table class="w-full text-left text-xs min-w-[760px]">
+                    <thead class="bg-slate-900 text-white">
+                        <tr>
+                            <th class="p-4 font-bold">Capa</th>
+                            <th class="p-4 font-bold">Archivos iniciales</th>
+                            <th class="p-4 font-bold">Responsabilidad</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-200 text-slate-700">
+                        <tr>
+                            <td class="p-4 font-bold text-teal-700">Controller</td>
+                            <td class="p-4 font-mono">controller/ProductControllerApi.java<br>controller/ProductController.java</td>
+                            <td class="p-4">La interfaz declara rutas HTTP y parámetros; la implementación recibe las solicitudes, llama al Service y define las respuestas HTTP.</td>
+                        </tr>
+                        <tr>
+                            <td class="p-4 font-bold text-pink-700">DTO</td>
+                            <td class="p-4 font-mono">dto/ProductCreateRequest.java<br>dto/ProductResponse.java</td>
+                            <td class="p-4">Records para entrada y salida JSON. El Request puede incluir validaciones como <code class="font-mono">@NotBlank</code> y conversión <code class="font-mono">toEntity()</code>; el Response puede ofrecer <code class="font-mono">fromEntity(...)</code>.</td>
+                        </tr>
+                        <tr>
+                            <td class="p-4 font-bold text-purple-700">Entity</td>
+                            <td class="p-4 font-mono">entity/ProductEntity.java</td>
+                            <td class="p-4">Modelo persistente del módulo: tabla, columnas, ID y relaciones JPA. No representa directamente el contrato HTTP.</td>
+                        </tr>
+                        <tr>
+                            <td class="p-4 font-bold text-sky-700">Repository</td>
+                            <td class="p-4 font-mono">repository/ProductRepository.java</td>
+                            <td class="p-4">Interfaz que extiende <code class="font-mono">JpaRepository&lt;ProductEntity, ID&gt;</code>. En esta guía solo se usan las operaciones CRUD heredadas, sin derived queries ni JPQL.</td>
+                        </tr>
+                        <tr>
+                            <td class="p-4 font-bold text-amber-700">Service</td>
+                            <td class="p-4 font-mono">service/ProductService.java<br>service/impl/ProductServiceImpl.java</td>
+                            <td class="p-4">La interfaz define operaciones del caso de uso; la implementación marcada con <code class="font-mono">@Service</code> delega al Repository. Las reglas de negocio se agregan en esta capa.</td>
+                        </tr>
+                        <tr>
+                            <td class="p-4 font-bold text-indigo-700">Pruebas</td>
+                            <td class="p-4 font-mono">test/.../ProductControllerTests.java<br>test/.../ProductServiceTests.java</td>
+                            <td class="p-4">Pruebas opcionales pero recomendadas para validar el contrato HTTP, las conversiones DTO/Entity y el comportamiento del Service.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="bg-sena-lightGreen p-5 rounded-2xl border border-emerald-200 text-xs text-slate-700 space-y-2">
+                <p><strong>Paquetes sugeridos:</strong> <code class="font-mono">com.sena.controllabs.controller</code>, <code class="font-mono">dto</code>, <code class="font-mono">entity</code>, <code class="font-mono">repository</code> y <code class="font-mono">service</code>/<code class="font-mono">service.impl</code>.</p>
+                <p><strong>Orden de creación:</strong> Entity &rarr; Repository CRUD base &rarr; interfaz e implementación Service &rarr; DTOs &rarr; interfaz e implementación Controller &rarr; pruebas. Mantén el Repository sin consultas personalizadas en esta etapa.</p>
+            </div>
+        </section>
+
+    </main>
+
+    <script>
+        function runUnifiedSimulation() {
+            const val = document.getElementById('unified-select').value;
+            const chain = document.getElementById('bean-chain');
+            const out = document.getElementById('unified-log-out');
+            const time = new Date().toISOString().substring(11, 19);
+
+            if (val === 'ROOMS_ALL') {
+                chain.innerText = 'RoomController -> RoomServiceImpl -> RoomRepository -> RoomResponse::fromEntity';
+                out.innerText = `[${time}] INFO  RoomController  : Recibida peticion GET /api/v1/rooms
+[${time}] DEBUG RoomServiceImpl : [Passthrough] Delegando findAll() hacia RoomRepository (Retorna List<RoomEntity>)
+[${time}] DEBUG org.hibernate.SQL :
+    SELECT r.id, r.nombre, r.bloque, r.capacidad_pcs, r.estado
+    FROM rooms r
+[${time}] DEBUG RoomResponse    : Ejecutando RoomResponse::fromEntity sobre la lista
+[${time}] INFO  RoomController  : Retornando HTTP 200 OK (Lista de RoomResponse DTO)`;
+            } else if (val === 'USER_ID') {
+                chain.innerText = 'UserController -> UserServiceImpl -> UserRepository -> UserResponse::fromEntity';
+                out.innerText = `[${time}] INFO  UserController  : Recibida peticion GET /api/v1/users/8aa2d8e0-6a67-4c28-9c2a-019ebea00001
+[${time}] DEBUG UserServiceImpl : [Passthrough] Delegando findById(UUID) hacia UserRepository (Optional<UserEntity>)
+[${time}] DEBUG org.hibernate.SQL :
+    SELECT u.id, u.email, u.nombre, u.rol, u.activo, u.created_at
+    FROM users u
+    WHERE u.id = ?
+[${time}] DEBUG UserResponse    : Ejecutando UserResponse.fromEntity(userEntity)
+[${time}] INFO  UserController  : Retornando HTTP 200 OK (UserResponse DTO)`;
+            } else if (val === 'LOAN_CREATE') {
+                chain.innerText = 'LoanController (requestDto.toEntity()) -> LoanServiceImpl -> LoanRepository -> LoanResponse.fromEntity()';
+                out.innerText = `[${time}] INFO  LoanController  : Recibida peticion POST /api/v1/loans con LoanCreateRequest DTO
+[${time}] DEBUG LoanCreateReq   : Ejecutando requestDto.toEntity() -> LoanEntity lista
+[${time}] DEBUG LoanServiceImpl : [Passthrough] Delegando save(loanEntity) hacia LoanRepository
+[${time}] DEBUG org.hibernate.SQL :
+    INSERT INTO loans (room_id, instructor_id, guarda_id, numero_pc, estado, created_at)
+    VALUES (?, ?, ?, ?, 'PENDIENTE_APROBACION', now())
+[${time}] DEBUG LoanResponse    : Ejecutando LoanResponse.fromEntity(savedEntity)
+[${time}] INFO  LoanController  : Retornando HTTP 201 Created (LoanResponse DTO)`;
+            }
+
+            confetti({
+                particleCount: 50,
+                spread: 55,
+                origin: { y: 0.8 }
+            });
+        }
+    </script>
+
+    <!-- Footer SENA -->
+    <footer class="bg-sena-dark text-white border-t-2 border-sena-green py-8 text-center text-xs text-slate-400 space-y-2">
+        <p class="font-bold text-slate-200">SERVICIO NACIONAL DE APRENDIZAJE - SENA</p>
+        <p>Centro de Gestión de Mercados, Logística y Tecnologías de la Información</p>
+        <p>Análisis y Desarrollo de Software (ADSO) • Guía Didáctica Unificada (Persistencia + Servicios Passthrough)</p>
+        <p class="text-sena-green font-semibold pt-2">Diseñado para la formación integral de aprendices en Spring Boot Enterprise</p>
+    </footer>
+
+</body>
+</html>

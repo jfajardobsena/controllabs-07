@@ -1,15 +1,24 @@
 package com.sena.controllabs.dto;
 
-import java.time.LocalDateTime;
+import java.util.UUID;
+
+import com.sena.controllabs.entity.RoomEntity;
 
 public record RoomResponse(
-    Long id,
-    String code,
-    String name,
-    Integer totalPcs,
-    String locationBlock,
-    String status,
-    LocalDateTime createdAt
+        UUID id,
+        String nombre,
+        String bloque,
+        Integer capacidadPcs,
+        String estado
 ) {
 
+    public static RoomResponse fromEntity(RoomEntity entity) {
+        return new RoomResponse(
+                entity.getId(),
+                entity.getNombre(),
+                entity.getBloque(),
+                entity.getCapacidadPcs(),
+                entity.getEstado().name()
+        );
+    }
 }

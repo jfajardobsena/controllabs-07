@@ -1,7 +1,7 @@
 package com.sena.controllabs.controller;
 
-import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -9,48 +9,50 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.sena.controllabs.dto.RoomCreateRequest;
 import com.sena.controllabs.dto.RoomResponse;
+import com.sena.controllabs.entity.RoomEntity;
+import com.sena.controllabs.service.RoomService;
 
 import jakarta.validation.Valid;
 
 @RestController
 public class RoomController implements RoomControllerApi {
 
-    @Override
-    public ResponseEntity<List<RoomResponse>> getAllRooms(String block) {
-        RoomResponse sampleRoom = new RoomResponse(
-                101L, "LAB-301", "Laboratorio Redes SENA", 30,
-                block != null ? block : "Bloque A", "DISPONIBLE", LocalDateTime.now()
-        );
-        RoomResponse sampleRoom1 = new RoomResponse(
-                102L, "LAB-302", "Laboratorio Desarrollo SENA", 25,
-                block != null ? block : "Bloque B", "DISPONIBLE", LocalDateTime.now()
-        );
-        return ResponseEntity.ok(List.of(sampleRoom, sampleRoom1));
+    private final RoomService roomService;
+
+    public RoomController(RoomService roomService) {
+        this.roomService = roomService;
     }
 
     @Override
-    public ResponseEntity<RoomResponse> getRoomById(Long id) {
-        RoomResponse room = new RoomResponse(
-                id, "LAB-" + id, "Laboratorio Computación " + id, 25,
-                "Bloque B", "DISPONIBLE", LocalDateTime.now()
-        );
-        return ResponseEntity.ok(room);
+    public ResponseEntity<List<RoomResponse>> getAllRooms(String block) {
+        List<RoomEntity> rooms = block == null
+                ? roomService.findAll()
+                : roomService.findByBloque(block);
+
+        List<RoomResponse> responseList = rooms.stream()
+                .map(RoomResponse::fromEntity)
+                .toList();
+        return ResponseEntity.ok(responseList);
+    }
+
+    @Override
+    public ResponseEntity<RoomResponse> getRoomById(UUID id) {
+        return roomService.findById(id)
+                .map(RoomResponse::fromEntity)
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     @Override
     public ResponseEntity<RoomResponse> createRoom(@Valid RoomCreateRequest request) {
-        // En esta etapa el Controller construye el Response DTO con estado 201 CREATED
-        RoomResponse createdRoom = new RoomResponse(
-                202L, request.code(), request.name(), request.totalPcs(),
-                request.locationBlock(), "REGISTRADO", LocalDateTime.now()
-        );
-        return ResponseEntity.status(HttpStatus.CREATED).body(createdRoom);
+        RoomEntity savedEntity = roomService.save(request.toEntity());
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(RoomResponse.fromEntity(savedEntity));
     }
 
     @Override
-    public ResponseEntity<Void> deleteRoom(Long id) {
-        // HTTP 204 No Content para borrados exitosos sin cuerpo de respuesta
+    public ResponseEntity<Void> deleteRoom(UUID id) {
+        roomService.deleteById(id);
         return ResponseEntity.noContent().build();
     }
-
 }

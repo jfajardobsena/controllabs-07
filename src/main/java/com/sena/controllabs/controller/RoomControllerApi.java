@@ -1,6 +1,7 @@
 package com.sena.controllabs.controller;
 
 import java.util.List;
+import java.util.UUID;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -27,7 +28,7 @@ public interface RoomControllerApi {
 
     // 2. GET Obtener Aula por ID de Path Variable -> URL Final: /api/v1/rooms/{id}
     @GetMapping("/{id}")
-    ResponseEntity<RoomResponse> getRoomById(@PathVariable Long id);
+    ResponseEntity<RoomResponse> getRoomById(@PathVariable UUID id);
 
     // 3. POST Crear Aula recibiendo DTO en Request Body -> URL Final: /api/v1/rooms
     @PostMapping
@@ -37,6 +38,6 @@ public interface RoomControllerApi {
 
     // 4. DELETE Eliminar Aula por ID -> URL Final: /api/v1/rooms/{id}
     @DeleteMapping("/{id}")
-    ResponseEntity<Void> deleteRoom(@PathVariable Long id);
+    ResponseEntity<Void> deleteRoom(@PathVariable UUID id);
 
 }
